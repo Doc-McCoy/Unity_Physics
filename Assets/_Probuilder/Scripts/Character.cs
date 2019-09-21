@@ -30,6 +30,12 @@ public class Character : MonoBehaviour
     private bool m_IsGrounded;
     private CharacterController m_Controller;
 
+    public Vector3 Velocity
+    {
+        get { return m_Velocity; }
+        set {m_Velocity = value; }
+    }
+
     private void Awake()
     {
         m_Controller = GetComponent<CharacterController>();

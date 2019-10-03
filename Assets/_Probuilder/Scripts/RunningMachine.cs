@@ -5,14 +5,13 @@ using UnityEngine;
 public class RunningMachine : MonoBehaviour
 {
     public Vector3 m_Direction = Vector3.forward;
-    public float m_Speed = 50.0f;
-    private List<Character> m_Character;
+    public float m_Speed = 3.0f;
+    private List<Character> m_Character = new List<Character>();
 
     private void OnTriggerEnter(Collider other)
     {
-        if(other.CompareTag("Player"))
+        if (other.CompareTag("Player"))
         {
-            other.transform.parent = transform;
             m_Character.Add(other.gameObject.GetComponent<Character>());
         }
     }
@@ -21,7 +20,9 @@ public class RunningMachine : MonoBehaviour
     {
         if (other.CompareTag("Player"))
         {
-            other.transform.parent = null;
+            var character = other.gameObject.GetComponent<Character>();
+            character.m_ExternalMovement = Vector3.zero;
+            m_Character.Remove(character);
         }
     }
 
@@ -29,7 +30,7 @@ public class RunningMachine : MonoBehaviour
     {
         foreach (Character character in m_Character)
         {
-            character.Velocity += m_Direction * m_Speed;
+            character.m_ExternalMovement = m_Direction * m_Speed * Time.deltaTime;
         }
     }
 }

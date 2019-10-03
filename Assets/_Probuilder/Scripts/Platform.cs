@@ -13,10 +13,17 @@ public class Platform : MonoBehaviour
     private float m_Time;
     private bool m_Waiting;
 
+    private Character m_Character;
+
     private void Update()
     {
         if(m_Waiting)
         {
+            if (m_Character)
+            {
+                m_Character.m_ExternalMovement = Vector3.zero;
+            }
+
             if(Time.time - m_Time >= m_Delay)
             {
                 m_Waiting = false;
@@ -32,7 +39,14 @@ public class Platform : MonoBehaviour
         }
         else
         {
-            transform.position = Vector3.MoveTowards(transform.position, m_Points[m_Index].position, m_Speed * Time.deltaTime);
+            Vector3 nextPosition = Vector3.MoveTowards(transform.position, m_Points[m_Index].position, m_Speed * Time.deltaTime);
+            Vector3 movement = nextPosition - transform.position;
+            transform.position = nextPosition;
+
+             if (m_Character)
+            {
+                m_Character.m_ExternalMovement = movement;
+            }
         }
     }
 
@@ -40,7 +54,8 @@ public class Platform : MonoBehaviour
     {
         if(other.CompareTag("Player"))
         {
-            other.transform.parent = transform;
+            m_Character = other.GetComponent<Character>();
+            // other.transform.parent = transform;
         }
     }
 
@@ -48,7 +63,9 @@ public class Platform : MonoBehaviour
     {
         if (other.CompareTag("Player"))
         {
-            other.transform.parent = null;
+            m_Character.m_ExternalMovement = Vector3.zero;
+            m_Character = null;
+            // other.transform.parent = null;
         }
     }
 }

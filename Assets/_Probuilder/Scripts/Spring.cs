@@ -31,11 +31,11 @@ public class Spring : MonoBehaviour
     {
         yield return new WaitForSeconds(m_Time);
 
-        Vector3 velocity = character.Velocity;
+        Vector3 velocity = character.m_Velocity;
         velocity.x = m_Direction.x != 0 ? 0 : m_Direction.x;
         velocity.y = m_Direction.y != 0 ? 0 : m_Direction.y;
         velocity.z = m_Direction.z != 0 ? 0 : m_Direction.z;
 
-        character.Velocity += m_Direction * m_Force;
+        character.m_Velocity += m_Direction * m_Force;
     }
 }

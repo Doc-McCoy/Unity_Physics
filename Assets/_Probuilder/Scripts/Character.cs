@@ -15,6 +15,7 @@ public class Character : MonoBehaviour
     public float m_JumpHeight = 2.0f;
     public float m_DashDistance = 5.0f;
     public bool m_UseDoubleJump = true;
+    public bool m_UseAxisZ = false;
     
     [Header("Dynamic")]
     public float m_Gravity = -9.18f;
@@ -25,16 +26,20 @@ public class Character : MonoBehaviour
     public float m_GroundDistance = 0.1f;
     public LayerMask m_GroundLayer;
 
-    private Vector3 m_Velocity;
+    [Header("External")]
+    public Vector3 m_ExternalMovement = Vector3.zero;
+
+    public Vector3 m_Velocity = Vector3.zero;
+
     private bool m_CanDoubleJump;
     private bool m_IsGrounded;
     private CharacterController m_Controller;
 
-    public Vector3 Velocity
+    /* public Vector3 Velocity
     {
         get { return m_Velocity; }
         set {m_Velocity = value; }
-    }
+    } */
 
     private void Awake()
     {
@@ -55,9 +60,9 @@ public class Character : MonoBehaviour
         // Verificar inputs de movimento
         float horizontal = Input.GetAxis(m_HorizontalAxisName);
         float vertical = Input.GetAxis(m_VerticalAxisName);
-        Vector3 movement = new Vector3(horizontal, 0.0f, vertical);
+        Vector3 movement = new Vector3(horizontal, 0.0f, m_UseAxisZ ? vertical : 0.0f);
 
-        m_Controller.Move(movement * m_Speed * Time.deltaTime);
+        m_Controller.Move(m_ExternalMovement + movement * m_Speed * Time.deltaTime);
 
         // Setar a frente do player sempre na direção que ele está andando (caso ele esteja andando)
         if (movement != Vector3.zero) transform.forward = movement;

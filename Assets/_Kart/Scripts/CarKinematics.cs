@@ -37,7 +37,7 @@ public class CarKinematics : MonoBehaviour
 
 	[Header("Drive Mode")]
 	public DriveMode m_DriveMode = DriveMode.All;
-	public SpeedMode s_SpeedMode = SpeedMode.KilometersPerHours;
+	public SpeedMode m_SpeedMode = SpeedMode.KilometersPerHours;
 	public enum DriveMode { Front, Rear, All };
 	public enum SpeedMode { MeterPerSecond, KilometersPerHours, MilesPerHour }
 
@@ -46,7 +46,7 @@ public class CarKinematics : MonoBehaviour
 	private Rigidbody m_Body;
 	private float m_HorizontalInput;
 	private float m_VerticalInput;
-	private float m_BrakeInput;
+	private bool m_BrakeInput;
 
 	private void Start()
 	{
@@ -63,16 +63,27 @@ public class CarKinematics : MonoBehaviour
 	{
 		m_HorizontalInput = Input.GetAxis(m_HorizontalAxisName);
 		m_VerticalInput = Input.GetAxis(m_VerticalAxisName);
-		m_BrakeInput = Input.GetAxis(m_BrakeButtonName);
+		m_BrakeInput = Input.GetButton(m_BrakeButtonName);
 	}
 
 	private void FixedUpdate()
 	{
 		Steering();
-		// Accelerate();
-		// Braking();
-		// Decelerate();
-		// UpdateMeshes();
+		Accelerate();
+		Braking();
+		Decelerate();
+		UpdateMeshes();
+	}
+
+	private float GetSpeed()
+	{
+		if (m_SpeedMode == SpeedMode.KilometersPerHours) {
+			return m_Body.velocity.magnitude * 3.6f;
+		} else if (m_SpeedMode == SpeedMode.MilesPerHour) {
+			return m_Body.velocity.magnitude * 2.237f;
+		} else { // m_SpeedMode == SpeedMode.MeterPerSecond
+			return m_Body.velocity.magnitude;
+		}
 	}
 
 	private void Steering()
@@ -81,8 +92,7 @@ public class CarKinematics : MonoBehaviour
 		
 		if (m_UseStabilityCurves)
 		{
-			// float speedFactor = Speed / m_MaxSpeedToSteerAngle;
-			float speedFactor = 1.0f / m_MaxSpeedToSteerAngle;
+			float speedFactor = GetSpeed() / m_MaxSpeedToSteerAngle;
 			steerAngle = Mathf.Lerp(m_MaxSteerAngle, m_MinSteerAngle, speedFactor) * m_HorizontalInput;
 		}
 		else
@@ -92,5 +102,57 @@ public class CarKinematics : MonoBehaviour
 
 		m_WheelColliderFL.steerAngle = Mathf.Lerp(m_WheelColliderFL.steerAngle, steerAngle, Time.deltaTime * m_SmoothSteeringAngle);
 		m_WheelColliderFR.steerAngle = Mathf.Lerp(m_WheelColliderFR.steerAngle, steerAngle, Time.deltaTime * m_SmoothSteeringAngle);
+	}
+
+	private void Accelerate()
+	{
+		float motorTorque = m_VerticalInput > 0.0f ? m_VerticalInput * m_MaxMotorTorque : m_VerticalInput * m_MaxReverseTorque;
+
+		m_WheelColliderFL.motorTorque = m_DriveMode == DriveMode.Rear ? 0.0f : motorTorque;
+		m_WheelColliderFR.motorTorque = m_DriveMode == DriveMode.Rear ? 0.0f : motorTorque;
+		m_WheelColliderRL.motorTorque = m_DriveMode == DriveMode.Front ? 0.0f : motorTorque;
+		m_WheelColliderRR.motorTorque = m_DriveMode == DriveMode.Front ? 0.0f : motorTorque;
+	}
+
+	private void Braking()
+	{
+		float brakeTorque = m_BrakeInput ? m_BrakeForce : 0.0f;
+
+		m_WheelColliderFL.brakeTorque = brakeTorque;
+		m_WheelColliderFR.brakeTorque = brakeTorque;
+		m_WheelColliderRL.brakeTorque = brakeTorque;
+		m_WheelColliderRR.brakeTorque = brakeTorque;
+	}
+
+	private void Decelerate()
+	{
+		float motorTorque = m_VerticalInput * m_MaxDecelerationForce;
+
+		if (motorTorque == 0.0f && !m_BrakeInput)
+		{
+			m_WheelColliderFL.brakeTorque = motorTorque;
+			m_WheelColliderFR.brakeTorque = motorTorque;
+			m_WheelColliderRL.brakeTorque = motorTorque;
+			m_WheelColliderRR.brakeTorque = motorTorque;
+		}
+
+	}
+
+	private void UpdateMeshes()
+	{
+		UpdateMesh(m_WheelColliderFR, m_WheelMeshFR);
+		UpdateMesh(m_WheelColliderFL, m_WheelMeshFL);
+		UpdateMesh(m_WheelColliderRR, m_WheelMeshRR);
+		UpdateMesh(m_WheelColliderRL, m_WheelMeshRL);
+	}
+
+	private void UpdateMesh(WheelCollider collider, Transform wheel)
+	{
+		Vector3 position = wheel.position;
+		Quaternion rotation = wheel.rotation;
+		collider.GetWorldPose(out position, out rotation);
+		rotation *= Quaternion.Euler(new Vector3(0.0f, 0.0f, 90.0f));
+		wheel.position = position;
+		wheel.rotation = rotation;
 	}
 }
